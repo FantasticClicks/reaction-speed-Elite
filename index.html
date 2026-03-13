@@ -205,6 +205,12 @@ box-shadow:0 0 10px red inset,0 0 20px red;
     100%{transform:translate(0,0);}
 }
 
+@keyframes pulseGod {
+    0% { transform: scale(1); box-shadow:0 0 30px #d4d4ff,0 0 60px #66ffff; }
+    50% { transform: scale(1.1); box-shadow:0 0 50px #d4d4ff,0 0 100px #66ffff; }
+    100% { transform: scale(1); box-shadow:0 0 30px #d4d4ff,0 0 60px #66ffff; }
+}
+
 /* --- MOBILE STYLES --- */
 @media (max-width: 768px) {
     #gameBox {
@@ -747,31 +753,59 @@ function updateGraph(){
         bar.style.height=Math.max(10,180-t*0.5)+"px"; // scale for bigger graph
         bar.style.position="relative";
 
-        // Color logic
-        if(t > 300){
-    bar.style.background="#ff0000";
-}
+        // Color logic with shiny tiers
 
-if(t > 220) bar.style.background="#b0ffff";       // slow
-else if(t > 200) bar.style.background="#ff9900";  // decent
-else if(t > 190) bar.style.background="#ffee00";  // good
-else if(t > 180) bar.style.background="#66ff00";  // great
-else if(t > 170) bar.style.background="#00ffaa";  // nice
-else if(t > 120) bar.style.background="#00ccff";  // pro
-else if(t > 80) bar.style.background="#0077ff";   // elite
+if(t > 300){
+    bar.style.background="#ff2200"; // Lava Red - fail
+    bar.style.boxShadow="";          // no glow
+}
+else if(t > 240){
+    bar.style.background="#ffff00"; // Yellow Alert
+    bar.style.boxShadow="";          // no glow
+}
+else if(t > 200){
+    bar.style.background="#00cc00"; // Normal Green - flat
+    bar.style.boxShadow="";          // no glow
+}
+else if(t > 170){
+    bar.style.background="#00ff55"; // Neon Green - slight glow
+    bar.style.boxShadow="0 0 10px #00ff55";
+}
+// Then continue with your existing shiny tiers
+else if(t > 150){
+    bar.style.background="#66ccff"; // Blueberry Pearl
+    bar.style.boxShadow="0 0 15px #66ccff";
+}
+else if(t > 120){
+    bar.style.background="#ffffff"; // Frost Halo
+    bar.style.boxShadow="0 0 20px #ffffff, 0 0 40px #00ffff";
+}
+else if(t > 90){
+    bar.style.background="#a0ffff"; // Glacier
+    bar.style.boxShadow="0 0 20px #a0ffff";
+}
 else if(t > 60){
-bar.style.background="#ff00ff";                   // inhuman
-bar.style.boxShadow="0 0 20px #ff00ff";
+    bar.style.background="#ff99ff"; // Lilac Blush
+    bar.style.boxShadow="0 0 25px #ff99ff";
 }
-else if(t > 40){
-bar.style.background="#ff0099";                   // masterclass
-bar.style.boxShadow="0 0 25px #ff0099";
+else if(t > 35){
+    bar.style.background="#ffffff"; // Halo White
+    bar.style.boxShadow="0 0 30px #ffffff, 0 0 60px #ff88ff";
 }
+// Ultra rare glowing rainbow 11-35ms
+else if(t > 10){
+    const ultraColors=["#ff00ff","#00ffff","#ff8800","#ff0000","#00ff00","#0000ff"]; // rainbow array
+    let colorIndex=Math.floor((t-11)/4) % ultraColors.length; 
+    bar.style.background=ultraColors[colorIndex];
+    bar.style.boxShadow="0 0 40px "+bar.style.background+", 0 0 80px "+bar.style.background;
+    bar.style.animation="rainbowPulse 1.5s infinite alternate";
+}
+// Godlike 1-10ms
 else{
-bar.style.background="#00ffff";                   // legendary
-bar.style.boxShadow="0 0 30px #00ffff,0 0 60px #00ffff";
+    bar.style.background="#d4d4ff"; // Mercury/Galbium
+    bar.style.boxShadow="0 0 50px #d4d4ff, 0 0 100px #66ffff";
+    bar.style.animation="pulseGod 1.2s infinite alternate";
 }
-
         // Glow for low values
         if(t<150) bar.style.boxShadow="0 0 15px "+bar.style.background;
 
