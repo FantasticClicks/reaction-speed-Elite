@@ -1,0 +1,988 @@
+<!--
+Reaction Speed Elite
+Created by FantasticClicks
+© 2026
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Reaction Speed Elite</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI, sans-serif;
+    background:#111;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    overflow:hidden;
+    user-select:none;
+    
+    -webkit-user-select: none;
+-ms-user-select: none;
+user-select: none;
+-webkit-touch-callout: none;
+}
+
+#gameBox{text-align:center;}
+
+#reactionArea{
+    width:280px; /* smaller for more pillar space */
+    height:180px;
+    margin:20px auto;
+    border-radius:20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:28px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.waiting{ background:#222; }
+.ready{ background:#0a0; }
+.fakeReady{ background:#aa0000; }
+.tooSoon{ background:#a00; }
+.result{ background:#222; }
+.warningLava{
+background:linear-gradient(45deg,#330000,#ff2200);
+color:#fff;
+font-weight:bold;
+text-shadow:0 0 10px red,0 0 20px orange,0 0 40px red;
+
+animation:lavaPulse 0.7s infinite alternate;
+}
+
+@keyframes lavaPulse{
+
+0%{
+transform:scale(1);
+box-shadow:0 0 10px red inset,0 0 20px red;
+}
+
+50%{
+transform:scale(1.05);
+box-shadow:0 0 25px orange inset,0 0 40px red;
+}
+
+100%{
+transform:scale(1);
+box-shadow:0 0 10px red inset,0 0 20px red;
+}
+
+}
+
+#stats{ margin-top:10px; font-size:14px; }
+
+#graph {
+    height: 180px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    width: 400px;       /* fixed width so first pillar appears */
+    max-width: 100%;    /* responsive if needed */
+    position: relative;
+    justify-content: flex-start; /* bars start from the left inside the container */
+}
+
+.bar{ flex:1; border-radius:3px; transition:0.15s; position:relative; }
+
+.barLabel{
+    position:absolute;
+    bottom:-18px;
+    width:100%;
+    text-align:center;
+    font-size:10px;
+    color:#fff;
+}
+
+#rankBadge{ margin-top:8px; font-weight:bold; }
+
+#leaderboard {
+    position: relative;        /* normal flow, not fixed anymore */
+    margin: 20px auto 30px auto;  /* top 20px from graph, bottom 30px spacing */
+    width: fit-content;        /* only as wide as text */
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    background: rgba(0,0,0,0.5); /* optional subtle background for separation */
+    padding: 6px 15px;           /* soft padding around text */
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+#graphContainer {
+    display: flex;
+    flex-direction: column; /* stack graph on top of leaderboard */
+    align-items: center;    /* center horizontally */
+    margin-top: 60px;       /* spacing from stats above */
+}
+
+#streakRewardBox{
+    position:fixed;
+    left:calc(50% + 240px); /* right side */
+    top:50%;
+    transform:translateY(-50%);
+    text-align:center;
+    max-width:450px;
+    max-height:450px;
+    z-index:1000;
+}
+#streakRewardBox img, #streakRewardBox video{
+    max-width:130%; /* increased 30% */
+    max-height:130%;
+    border-radius:10px;
+    box-shadow:0 0 30px rgba(0,255,255,0.6);
+}
+
+#rankBoom, #focusBanner {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+    font-weight: 900;
+    font-size: 36px;       /* F is bigger than others automatically by vertical stacking */
+    line-height: 1;        /* no extra spacing between letters */
+    text-align: center;
+    animation: pulseFocus 1.2s infinite alternate;
+}
+@keyframes pulseFocus {
+    0%   { transform: scale(1); text-shadow: 0 0 10px #00ffff,0 0 20px #ff00ff; }
+    50%  { transform: scale(1.1); text-shadow: 0 0 20px #00ffff,0 0 40px #ff00ff; }
+    100% { transform: scale(1); text-shadow: 0 0 10px #00ffff,0 0 20px #ff00ff; }
+}
+
+#consistency {
+    color: violet;
+    font-weight: bold;
+    text-shadow: 0 0 10px violet, 0 0 20px purple;
+    animation: pulsePurple 1.5s infinite;
+}
+
+@keyframes pulsePurple {
+    0% { text-shadow: 0 0 5px violet, 0 0 10px purple; transform: scale(1); }
+    50% { text-shadow: 0 0 20px violet, 0 0 40px purple; transform: scale(1.1); }
+    100% { text-shadow: 0 0 5px violet, 0 0 10px purple; transform: scale(1); }
+}
+
+#consistency:hover {
+    text-shadow: 0 0 30px violet, 0 0 60px purple;
+}
+
+#photoRewardBox{
+    position:fixed;
+    left:calc(20px + 10px); /* 1cm to the right */
+    top:50%;
+    transform:translateY(-50%);
+    text-align:center;
+    z-index:1000;
+}
+#photoRewardBox img{
+    max-width:320px;
+    max-height:450px;
+    border-radius:10px;
+    box-shadow:0 0 30px rgba(0,255,255,0.6);
+    opacity:0;
+}
+.sparkle{
+    position:absolute;
+    width:5px; height:5px;
+    background:#fff;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+@keyframes spin{
+    0%{transform:translate(0,0);}
+    25%{transform:translate(5px,-5px);}
+    50%{transform:translate(-5px,5px);}
+    75%{transform:translate(3px,-3px);}
+    100%{transform:translate(0,0);}
+}
+
+/* --- MOBILE STYLES --- */
+@media (max-width: 768px) {
+    #gameBox {
+        width: 95vw;     /* almost full screen width */
+        margin: 0 auto;
+    }
+    #streakRewardBox,
+    #photoRewardBox {
+        display: none;   /* will appear as overlay when needed */
+    }
+    #reactionArea {
+        width: 90vw;     /* reaction box adapts to mobile */
+        height: 180px;   /* keep height same for consistency */
+        font-size: 24px; /* slightly smaller font for small screens */
+    }
+    #graph {
+        width: 95%;      /* graph scales with screen */
+        gap:1px;
+    }
+}
+
+</style>
+</head>
+<body>
+
+<div id="gameBox">
+<h1>Reaction Speed Elite</h1>
+<div id="reactionArea" class="waiting">Click to Start</div>
+
+<div id="stats">
+Attempts: <span id="attempts">0</span> |
+Consistency: <span id="consistency">--%</span> |
+<div id="heatBar" style="width:280px;height:8px;background:#222;margin:10px auto;border-radius:6px;overflow:hidden;">
+<div id="heatFill" style="height:100%;width:0;background:orange;"></div>
+</div>
+Best: <span id="best">--</span> ms |
+Wins: <span id="winCount">0</span> |
+Combo: <span id="comboDisplay">0</span>
+</div>
+
+<div id="skill">🧠 --</div>
+<div id="rankBadge"></div>
+<div id="graphContainer">
+    <div id="graph"></div>
+    <div id="leaderboard"></div>
+</div>
+
+<audio id="bgMusic" src="assets/sound.mp3" loop autoplay></audio>
+<audio id="eliteSound" src="assets/sound.mp3"></audio>
+
+<div id="streakRewardBox"></div>
+<div id="photoRewardBox"></div>
+
+<script>
+
+const audioCtx = new AudioContext();
+const damnSound = new Audio("assets/damn.mp3");
+console.log("Reaction Speed Elite - Created by FantasticClicks © 2026");
+const consistencyDisplay = document.getElementById("consistency");
+const heatFill=document.getElementById("heatFill");
+const area=document.getElementById("reactionArea");
+const attemptsDisplay=document.getElementById("attempts");
+const bestDisplay=document.getElementById("best");
+const winDisplay=document.getElementById("winCount");
+const comboDisplay=document.getElementById("comboDisplay");
+const rankBadge=document.getElementById("rankBadge");
+const graph=document.getElementById("graph");
+const leaderboard=document.getElementById("leaderboard");
+const bgMusic=document.getElementById("bgMusic");
+const eliteSound=document.getElementById("eliteSound");
+const streakBox=document.getElementById("streakRewardBox");
+const photoBox=document.getElementById("photoRewardBox");
+
+function showRankBoom(rank,color){
+
+let old=document.getElementById("rankBoom");
+if(old) old.remove();
+
+let msg=document.createElement("div");
+msg.id="rankBoom";
+
+msg.innerText=rank;
+
+msg.style.position="absolute";
+msg.style.left = area.offsetLeft + area.offsetWidth + 20 + "px";
+msg.style.top = area.offsetTop - 20 + "px";
+
+msg.style.fontSize="42px";
+msg.style.fontWeight="bold";
+msg.style.color=color;
+
+msg.style.textShadow="0 0 25px "+color;
+
+msg.style.zIndex=5000;
+
+document.body.appendChild(msg);
+
+msg.animate(
+[
+{transform:"scale(0.3) rotate(-8deg)",opacity:0},
+{transform:"scale(1.6) rotate(5deg)",opacity:1},
+{transform:"scale(1.2) rotate(-2deg)",opacity:1},
+{transform:"scale(1) rotate(0deg)",opacity:0}
+],
+{duration:2200,easing:"cubic-bezier(.17,.67,.35,1.4)"}
+);
+setTimeout(()=>msg.remove(),2200);
+}
+
+let startTime=0;
+let nextPhotoUnlock = 5;
+let timeout=null;
+let state="idle";
+let advancedMode=false;
+let advancedCounter=0;
+let attempts=0;
+let streak=0;
+let bestTime=null;
+let sub300Wins=0;
+let combo=0;
+let history=[];
+let fakeChance=0.2;
+let difficultyMin=1500;
+let difficultyMax=4000;
+const rewardImages=["one.webp","two.webp","three.webp","four.webp","five.webp","six.webp","seven.webp","eight.webp","nine.webp","ten.webp"];
+const rewardVideos=["1.mp4","2.mp4","3.mp4","4.mp4","5.mp4"];
+let rewardActive=false;
+let unlockedPhotos=new Set();
+let rewardLock = false;
+
+function loadLeaderboard(){
+    return JSON.parse(localStorage.getItem("reflexData"))||{bestEver:null,bestCombo:0,totalWins:0,totalAttempts:0};
+}
+function saveLeaderboard(data){
+    localStorage.setItem("reflexData",JSON.stringify(data));
+}
+function updateLeaderboardDisplay(){
+    let data=loadLeaderboard();
+    leaderboard.innerHTML=`🏆 Best Ever: ${data.bestEver||"--"} ms | 🔥 Best Combo: ${data.bestCombo} | 🎯 Total Wins: ${data.totalWins}`;
+}
+
+function adaptiveDifficulty(){
+    if(history.length<5) return;
+    let avg=history.slice(-10).reduce((a,b)=>a+b)/Math.min(history.length,10);
+    if(avg<150){ difficultyMin=800; difficultyMax=1500; fakeChance=0.35; }
+    else if(avg<200){ difficultyMin=1000; difficultyMax=2200; fakeChance=0.25; }
+    else if(avg>250){ difficultyMin=1800; difficultyMax=4000; fakeChance=0.1; }
+}
+
+function startGame(){
+    area.className="waiting";
+    area.innerText="Wait for GREEN...";
+    state="waiting";
+    let delay = difficultyMin + Math.random()*(difficultyMax-difficultyMin);
+
+delay -= streak*40;
+
+if(delay<600) delay=600;
+
+// add small unpredictable jitter
+delay += Math.random()*400;
+    timeout=setTimeout(()=>{
+        if(Math.random()<fakeChance){
+            area.className="fakeReady";
+            area.innerText="CLICK NOW!";
+            state="fake";
+            setTimeout(()=>{ if(state==="fake") startGame(); },500);
+        } else{
+            area.className="ready";
+area.innerText="CLICK NOW!";
+
+area.style.boxShadow="0 0 50px lime";
+setTimeout(()=>area.style.boxShadow="none",40);
+
+startTime=performance.now();
+state="ready";
+        }
+    },delay);
+}
+
+function screenShake(intensity){
+
+document.body.animate([
+{transform:"translate(0,0)"},
+{transform:`translate(${intensity}px,${-intensity}px)`},
+{transform:`translate(${-intensity}px,${intensity}px)`},
+{transform:`translate(${intensity}px,0)`},
+{transform:"translate(0,0)"}
+],{
+duration:120,
+iterations:1
+});
+
+}
+
+function updateSkillRating(){
+
+if(history.length<10) return;
+
+let avg = history.reduce((a,b)=>a+b)/history.length;
+
+let rank="";
+
+if(avg>260) rank="Beginner";
+else if(avg>220) rank="Casual";
+else if(avg>180) rank="Skilled";
+else if(avg>150) rank="Pro";
+else if(avg>120) rank="Elite";
+else if(avg>80) rank="Superhuman";
+else rank="Reflex God";
+
+document.getElementById("skill").innerText="🧠 "+rank;
+
+}
+
+function showBenchmark(){
+
+let avg = history.reduce((a,b)=>a+b)/history.length;
+
+let percentile = Math.round(100 - ((avg-69)/2));
+
+let panel=document.createElement("div");
+
+panel.style.position="fixed";
+panel.style.top="50%";
+panel.style.left="50%";
+panel.style.transform="translate(-50%,-50%)";
+panel.style.background="#000";
+panel.style.padding="25px";
+panel.style.borderRadius="12px";
+panel.style.boxShadow="0 0 30px cyan";
+panel.style.textAlign="center";
+panel.style.zIndex=3000;
+
+panel.innerHTML=
+`<h2>Human Benchmark</h2>
+<p>Your Average: ${avg.toFixed(0)} ms</p>
+<p>Average Human: 200 ms</p>
+<p>You are faster than <b>${percentile}%</b> of humans</p>
+<button onclick="this.parentElement.remove()">Continue</button>`;
+
+document.body.appendChild(panel);
+
+}
+
+function particleExplosion(){
+
+for(let i=0;i<40;i++){
+
+let p=document.createElement("div");
+
+p.style.position="fixed";
+p.style.width="6px";
+p.style.height="6px";
+p.style.borderRadius="50%";
+p.style.background=["#00ffff","#ff00ff","#ffff00","#00ff88"][Math.floor(Math.random()*4)];
+
+p.style.left=window.innerWidth/2+"px";
+p.style.top=window.innerHeight/2+"px";
+
+p.style.pointerEvents="none";
+
+document.body.appendChild(p);
+
+let angle=Math.random()*Math.PI*2;
+let distance=100+Math.random()*200;
+
+let x=Math.cos(angle)*distance;
+let y=Math.sin(angle)*distance;
+
+p.animate([
+{transform:"translate(0,0)",opacity:1},
+{transform:`translate(${x}px,${y}px)`,opacity:0}
+],{
+duration:700,
+easing:"ease-out"
+});
+
+setTimeout(()=>p.remove(),700);
+
+}
+
+}
+
+function reactionSound(rt){
+
+let osc = audioCtx.createOscillator();
+let gain = audioCtx.createGain();
+
+osc.type="sine";
+
+let pitch = Math.max(120, 600 - rt);
+osc.frequency.value = pitch;
+
+gain.gain.value = 0.05;
+
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+
+osc.start();
+osc.stop(audioCtx.currentTime+0.12);
+
+}
+
+function calculateConsistency() {
+    if(history.length < 5) return "--";
+    let avg = history.reduce((a,b)=>a+b)/history.length;
+    let variance = history.reduce((a,b)=>a+Math.pow(b-avg,2),0)/history.length;
+    let consistency = Math.max(0, 100 - Math.sqrt(variance));
+    return Math.round(consistency);
+}
+
+function showResult(rt){
+    attempts++;
+    attemptsDisplay.innerText=attempts;
+    consistencyDisplay.innerText = calculateConsistency() + "%";
+// Prediction detection
+if(rt < 80){
+let warn=document.createElement("div");
+warn.innerText="⚠ ANTICIPATION";
+warn.style.position="fixed";
+warn.style.top="35%";
+warn.style.left="50%";
+warn.style.transform="translate(-50%,-50%)";
+warn.style.fontSize="32px";
+warn.style.color="orange";
+warn.style.textShadow="0 0 20px orange";
+warn.style.zIndex=5000;
+document.body.appendChild(warn);
+setTimeout(()=>warn.remove(),900);
+}
+reactionSound(rt);
+
+if(rt>120 && rt<140){
+
+let msg=document.createElement("div");
+
+msg.innerText="SO CLOSE TO PRO";
+
+msg.style.position="fixed";
+msg.style.top="45%";
+msg.style.left="50%";
+msg.style.transform="translate(-50%,-50%)";
+
+msg.style.fontSize="28px";
+msg.style.color="yellow";
+msg.style.textShadow="0 0 20px yellow";
+
+msg.style.zIndex=4000;
+
+document.body.appendChild(msg);
+
+setTimeout(()=>msg.remove(),1000);
+
+}
+
+if(rt<200){
+streak++;
+}else{
+streak=0;
+}
+    history.push(rt);
+    if(history.length>17) history.shift();
+    updateGraph();
+    adaptiveDifficulty();
+
+    if(bestTime===null || rt<bestTime){
+        bestTime=rt;
+        bestDisplay.innerText=rt.toFixed(0);
+if(rt === bestTime){
+
+let banner = document.createElement("div");
+banner.id = "focusBanner";   // new ID
+banner.innerHTML = "F<br>O<br>C<br>U<br>S";
+
+banner.style.position="absolute";
+banner.style.top = (area.offsetTop + area.offsetHeight + 10) + "px";
+banner.style.left = (area.offsetLeft - 50) + "px";
+banner.style.top="55%";
+banner.style.left="35%";
+
+
+banner.style.fontSize="28px";
+banner.style.lineHeight="30px";
+banner.style.textAlign="center";
+banner.style.fontWeight="bold";
+banner.style.color="#00ffff";
+banner.style.textShadow="0 0 25px cyan";
+
+banner.style.zIndex=5000;
+
+document.body.appendChild(banner);
+
+
+setTimeout(()=>banner.remove(),1500);
+
+}
+    }
+
+if(rt<220 && rt>200) showRankBoom("DECENT","#ffaa00");
+if(rt<200 && rt>180) showRankBoom("GREAT","#ffff00");
+if(rt<180 && rt>150) showRankBoom("IMPRESSIVE","#00ff88");
+if(rt<150 && rt>120) showRankBoom("PRO","#00ccff");
+if(rt<120 && rt>80) showRankBoom("ELITE","#bb00ff");
+if(rt<80 && rt>60) showRankBoom("INHUMAN","#ff00aa");
+if(rt<60 && rt>35) showRankBoom("MASTERCLASS","#00ffff");
+if(rt<35 && rt>25) showRankBoom("CYBORG","#00ffcc");
+if(rt<25) showRankBoom("EXTRATERRESTRIAL","#ffffff");
+if(rt < 240 && Math.random() < 0.2){
+document.body.style.background="#001122";
+setTimeout(()=>document.body.style.background="#111",120);
+}
+
+if(rt <= 240){
+particleExplosion();
+}
+
+if(rt < 80){
+document.body.style.background="#000022";
+setTimeout(()=>document.body.style.background="#111",200);
+}
+
+if(attempts % 10 === 0){
+showBenchmark();
+}
+
+let heat=Math.min(combo*10,100);
+heatFill.style.width=heat+"%";
+
+if(combo>5){
+heatFill.style.background="red";
+}
+
+if(combo>10){
+heatFill.style.background="magenta";
+}
+
+if(combo >= 3){
+document.body.style.boxShadow="0 0 30px orange inset";
+}
+
+if(combo >= 5){
+document.body.style.boxShadow="0 0 50px red inset";
+}
+
+if(combo >= 7){
+document.body.style.boxShadow="0 0 70px crimson inset";
+}
+
+if(combo >= 10){
+document.body.style.boxShadow="0 0 90px magenta inset";
+}
+
+if(combo >= 15){
+document.body.style.boxShadow="0 0 120px cyan inset";
+}
+
+if(combo === 0){
+document.body.style.boxShadow="none";
+}
+   if(rt < 300){
+
+sub300Wins++;
+combo++;
+
+}else{
+
+if(combo >= 3){   // only play if streak actually existed
+damnSound.currentTime = 0;
+damnSound.play();
+}
+
+combo = 0;
+
+}
+    winDisplay.innerText=sub300Wins;
+    comboDisplay.innerText=combo;
+
+if(rt < 240) screenShake(3);
+if(rt < 220) screenShake(4);
+if(rt < 200) screenShake(5);
+if(rt < 190) screenShake(6);
+if(rt < 180) screenShake(7);
+if(rt < 140) screenShake(7);
+if(rt < 100) screenShake(9);
+if(rt < 80) screenShake(12);
+
+    // Photo reward every 5 wins <300
+/*   
+if(sub300Wins >= nextPhotoUnlock){
+showPhotoReward();
+nextPhotoUnlock += 5;
+}
+*/
+    // Video reward first sub-200 win
+    // if(rt<180 && !rewardActive) showVideoReward();
+
+    if(rt<150) area.style.boxShadow="0 0 40px #00ffcc"; else area.style.boxShadow="none";
+    if(rt<120){eliteSound.currentTime=0; eliteSound.play();}
+    if(rt<100){document.body.style.background="#003333"; setTimeout(()=>document.body.style.background="#111",150);}
+
+    updateRank();
+    updatePersistentStats(rt);
+    animateComboPulse();
+
+    area.className="result";
+    let rank="";
+
+if(rt>220) rank="SLOW";
+else if(rt>200) rank="DECENT";
+else if(rt>190) rank="GOOD";
+else if(rt>180) rank="GREAT";
+else if(rt>170) rank="NICE";
+else if(rt>120) rank="PRO";
+else if(rt>80) rank="ELITE";
+else if(rt>60) rank="INHUMAN";
+else if(rt>40) rank="MASTERCLASS";
+else rank="LEGENDARY";
+
+area.innerHTML=`${rt.toFixed(0)} ms<br>${rank}<br>Click to try again`;
+    state="result";
+updateSkillRating();
+}
+
+function updatePersistentStats(rt){
+    let data=loadLeaderboard();
+    data.totalAttempts++;
+    if(rt<300)data.totalWins++;
+    if(data.bestEver===null || rt<data.bestEver) data.bestEver=rt;
+    if(combo>data.bestCombo) data.bestCombo=combo;
+    saveLeaderboard(data);
+    updateLeaderboardDisplay();
+}
+
+function updateGraph(){
+    graph.innerHTML="";
+    history.forEach(t=>{
+        let bar=document.createElement("div");
+        bar.className="bar";
+        bar.style.height=Math.max(10,180-t*0.5)+"px"; // scale for bigger graph
+        bar.style.position="relative";
+
+        // Color logic
+        if(t > 300){
+    bar.style.background="#ff0000";
+}
+
+if(t > 220) bar.style.background="#b0ffff";       // slow
+else if(t > 200) bar.style.background="#ff9900";  // decent
+else if(t > 190) bar.style.background="#ffee00";  // good
+else if(t > 180) bar.style.background="#66ff00";  // great
+else if(t > 170) bar.style.background="#00ffaa";  // nice
+else if(t > 120) bar.style.background="#00ccff";  // pro
+else if(t > 80) bar.style.background="#0077ff";   // elite
+else if(t > 60){
+bar.style.background="#ff00ff";                   // inhuman
+bar.style.boxShadow="0 0 20px #ff00ff";
+}
+else if(t > 40){
+bar.style.background="#ff0099";                   // masterclass
+bar.style.boxShadow="0 0 25px #ff0099";
+}
+else{
+bar.style.background="#00ffff";                   // legendary
+bar.style.boxShadow="0 0 30px #00ffff,0 0 60px #00ffff";
+}
+
+        // Glow for low values
+        if(t<150) bar.style.boxShadow="0 0 15px "+bar.style.background;
+
+        // Score label
+        let label=document.createElement("div");
+        label.className="barLabel";
+        label.innerText=t.toFixed(0);
+        bar.appendChild(label);
+
+        graph.appendChild(bar);
+    });
+    graph.animate([{transform:"scale(1)"},{transform:"scale(1.03)"},{transform:"scale(1)"}],{duration:250});
+}
+
+function animateComboPulse(){
+    if(combo<2) return;
+    graph.querySelectorAll(".bar").forEach(b=>{
+        b.animate([{transform:"scale(1)"},{transform:`scale(${1+combo*0.02})`},{transform:"scale(1)"}],{duration:200});
+    });
+}
+
+function updateRank(){
+    let rate=attempts ? (sub300Wins/attempts)*100 : 0;
+    if(rate>=80) rankBadge.innerText="🏆 Reflex Monster";
+    else if(rate>=65) rankBadge.innerText="🔥 Elite Reactor";
+    else if(rate>=50) rankBadge.innerText="⚡ Sharp";
+    else if(rate>=35) rankBadge.innerText="👍 Average";
+    else rankBadge.innerText="🐢 Training Needed";
+}
+
+function showPhotoReward(){
+
+if(rewardLock) return;
+rewardLock = true;
+
+let available = rewardImages.filter(p=>!unlockedPhotos.has(p));
+if(available.length === 0){
+rewardLock = false;
+return;
+}
+
+let r = available[Math.floor(Math.random()*available.length)];
+unlockedPhotos.add(r);
+
+photoBox.innerHTML="";
+
+let img=document.createElement("img");
+img.src="assets/"+r;
+
+photoBox.appendChild(img);
+
+animatePixelAssemble(img);
+addSparkles(img);
+
+setTimeout(()=>{
+
+img.style.transition="opacity 0.5s";
+img.style.opacity="0";
+
+setTimeout(()=>{
+photoBox.innerHTML="";
+rewardLock=false;
+},500);
+
+},4000);
+
+}
+
+function showVideoReward(){
+
+if(rewardLock) return;
+rewardLock = true;
+
+rewardActive=true;
+streakBox.innerHTML="";
+
+let v=document.createElement("video");
+
+v.src="assets/"+rewardVideos[Math.floor(Math.random()*rewardVideos.length)];
+v.autoplay=true;
+v.playsInline=true;
+
+streakBox.appendChild(v);
+
+v.onended=()=>{
+streakBox.innerHTML="";
+rewardActive=false;
+rewardLock=false;
+}
+
+}
+
+function animatePixelAssemble(el){
+    el.style.opacity=0;
+    let opacity=0;
+    let interval=setInterval(()=>{
+        opacity+=0.05;
+        el.style.opacity=opacity;
+        if(opacity>=1) clearInterval(interval);
+    },30);
+}
+
+function addSparkles(el){
+    for(let i=0;i<8;i++){
+        let s=document.createElement("div");
+        s.className="sparkle";
+        s.style.top=Math.random()*el.offsetHeight+"px";
+        s.style.left=Math.random()*el.offsetWidth+"px";
+        el.appendChild(s);
+        setTimeout(()=>el.removeChild(s),1000);
+    }
+}
+
+area.addEventListener("click",()=>{
+    if(state==="idle"||state==="result") startGame();
+    else if(state==="waiting"){
+
+clearTimeout(timeout);
+
+area.className="warningLava";
+area.innerHTML="SMART ASS<br>Detected!";
+
+combo=0;
+state="locked";
+
+setTimeout(()=>{
+area.innerText="Click to try again";
+state="result";
+},5000);
+
+}
+    else if(state==="fake"){ area.className="tooSoon"; area.innerHTML="FAKE SIGNAL!"; combo=0; state="result"; }
+    else if(state==="ready"){ let rt=performance.now()-startTime; showResult(rt); }
+});
+
+document.body.addEventListener("click",()=>{ if(bgMusic.paused) bgMusic.play(); },{once:true});
+updateLeaderboardDisplay();
+
+// ===== Mobile Safari / small screen adjustments =====
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+function showMobileReward(el) {
+    if(!isMobile()) return;
+
+    // Hide game temporarily
+    document.getElementById("gameBox").style.display = "none";
+
+    // Show overlay
+    let overlay = document.createElement("div");
+    overlay.id = "mobileRewardOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "#000";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = 9999;
+    overlay.appendChild(el);
+    document.body.appendChild(overlay);
+
+    // If image, auto remove after 2 seconds
+    if(el.tagName.toLowerCase() === "img") {
+        setTimeout(()=>{
+            document.body.removeChild(overlay);
+            document.getElementById("gameBox").style.display = "block";
+        }, 2000);
+    }
+
+    // If video, remove overlay after video ends
+    if(el.tagName.toLowerCase() === "video") {
+        el.onended = ()=>{
+            document.body.removeChild(overlay);
+            document.getElementById("gameBox").style.display = "block";
+        }
+    }
+}
+/*
+// Override your existing showPhotoReward() and showVideoReward() calls for mobile
+const originalPhotoReward = showPhotoReward;
+showPhotoReward = function() {
+    originalPhotoReward();
+    let img = document.querySelector("#photoRewardBox img");
+    if(img) showMobileReward(img);
+};
+*/
+const originalVideoReward = showVideoReward;
+showVideoReward = function() {
+    originalVideoReward();
+    let video = document.querySelector("#streakRewardBox video");
+    if(video) showMobileReward(video);
+};
+
+</script>
+
+<div style="
+position:fixed;
+bottom:6px;
+left:50%;
+transform:translateX(-50%);
+opacity:0.35;
+font-size:11px;
+pointer-events:none;
+font-family:Segoe UI;
+">
+Reaction Speed Elite – Created by FantasticClicks © 2026
+</div>
+
+</body>
+</html>
